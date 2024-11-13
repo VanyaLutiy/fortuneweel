@@ -5,10 +5,14 @@ body {
   justify-content: center;
   background-color: #f0f0f0;
   height: 100vh;
-}
+  background-image: url('background_image.jpg');
+  background-size: cover;
+  background-position: center;
+  }
+
 
 canvas {
-  border: 2px solid #000;
+  border: none;
   margin-bottom: 20px;
 }
 
