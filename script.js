@@ -1,103 +1,108 @@
-// Инициализация переменных
-const canvas = document.getElementById("wheel");
-const ctx = canvas.getContext("2d");
-const spinButton = document.getElementById("spin-button");
-const modal = document.getElementById("modal");
-const modalMessage = document.getElementById("modal-message");
-const closeButton = document.getElementById("close-button");
+document.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("wheelCanvas");
+  const ctx = canvas.getContext("2d");
+  const spinButton = document.getElementById("spinButton");
 
-const segments = ["Промокод 1", "Промокод 2", "Промокод 3", "Денежный приз"];
-const colors = ["#FF5733", "#33FF57", "#3357FF", "#FFD700"];
-let startAngle = 0;
-let isSpinning = false;
-let spinAngle = 0;
-let spinTimeout = null;
+  // Список сегментов колеса
+  const segments = [
+    "Приз 1", "Приз 2", "Приз 3", "Приз 4", 
+    "Приз 5", "Приз 6", "Приз 7", "Приз 8", 
+    "Приз 9", "Приз 10"
+  ];
 
-// Рисуем колесо
-function drawWheel() {
-  const segmentAngle = (2 * Math.PI) / segments.length;
-  
-  segments.forEach((text, index) => {
-    // Устанавливаем цвет сегмента
-    ctx.fillStyle = colors[index];
-    
-    // Рисуем сегмент
-    ctx.beginPath();
-    ctx.moveTo(150, 150);
-    ctx.arc(150, 150, 150, startAngle, startAngle + segmentAngle);
-    ctx.lineTo(150, 150);
-    ctx.fill();
-    
-    // Добавляем текст
-    ctx.save();
-    ctx.translate(150, 150);
-    ctx.rotate(startAngle + segmentAngle / 2);
-    ctx.fillStyle = "#FFF";
-    ctx.font = "bold 14px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(text, 90, 0);
-    ctx.restore();
+  // Цвета для каждого сегмента
+  const segmentColors = [
+    "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", 
+    "#9966FF", "#FF9F40", "#FF5733", "#33FF57", 
+    "#FF6347", "#6A5ACD"
+  ];
 
-    // Переход к следующему сегменту
-    startAngle += segmentAngle;
-  });
-}
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+  const radius = 200;
+  let currentAngle = 0;
+  let isSpinning = false;
 
-// Функция анимации вращения колеса
-function rotateWheel() {
-  spinAngle += 20; // Скорость вращения
-  spinAngle %= 360;
-  canvas.style.transform = rotate(${spinAngle}deg);
+  // Функция рисования колеса
+  function drawWheel() {
+    const segmentAngle = (2 * Math.PI) / segments.length;
 
-  // Уменьшение скорости
-  if (spinTimeout) {
-    clearTimeout(spinTimeout);
-  }
-  spinTimeout = setTimeout(() => {
-    if (spinAngle > 0.5) {
-      rotateWheel();
-    } else {
-      stopWheel();
+    for (let i = 0; i < segments.length; i++) {
+      // Устанавливаем цвет сегмента
+      ctx.fillStyle = segmentColors[i];
+      
+      // Начинаем рисовать сегмент
+      ctx.beginPath();
+      ctx.moveTo(centerX, centerY);
+      ctx.arc(
+        centerX, centerY, radius, 
+        currentAngle, currentAngle + segmentAngle
+      );
+      ctx.lineTo(centerX, centerY);
+      ctx.fill();
+
+      // Рисуем текст на сегменте
+      ctx.save();
+      ctx.translate(
+        centerX + Math.cos(currentAngle + segmentAngle / 2) * (radius - 50),
+        centerY + Math.sin(currentAngle + segmentAngle / 2) * (radius - 50)
+      );
+      ctx.rotate(currentAngle + segmentAngle / 2);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 16px Arial";
+      ctx.fillText(
+        segments[i], 
+        -ctx.measureText(segments[i]).width / 2, 
+        5
+      );
+      ctx.restore();
+
+      // Увеличиваем угол для следующего сегмента
+      currentAngle += segmentAngle;
     }
-  }, 10);
-}
 
-// Старт вращения
-function startSpin() {
-  if (!isSpinning) {
-    isSpinning = true;
-    spinAngle = Math.random() * 5000 + 2000; // Генерация случайного угла
-    rotateWheel();
+    // Рисуем стрелку
+    ctx.fillStyle = "#000000";
+    ctx.beginPath();
+    ctx.moveTo(centerX - 10, centerY - radius - 10);
+    ctx.lineTo(centerX + 10, centerY - radius - 10);
+    ctx.lineTo(centerX, centerY - radius + 20);
+    ctx.fill();
   }
-}
 
-// Остановка вращения и отображение результата
-function stopWheel() {
-  const segmentAngle = 360 / segments.length;
-  const winningSegmentIndex = Math.floor((360 - (spinAngle % 360)) / segmentAngle) % segments.length;
-  const winningSegment = segments[winningSegmentIndex];
+  // Функция вращения колеса
+  function spinWheel() {
+    if (isSpinning) return;
+    isSpinning = true;
 
-  // Отображение результата через модальное окно
-  showModal(`Поздравляем! Вы выиграли: ${winningSegment}`);
+    let spinAngle = Math.random() * 360 + 360 * 4; // Минимум 4 полных оборота
+    let spinDuration = 4000; // Время вращения 4 секунды
+    const startAngle = currentAngle;
+    const startTime = performance.now();
 
-  // Сброс состояния
-  isSpinning = false;
-  spinAngle = 0;
-}
+    function animate(time) {
+      const elapsed = time - startTime;
+      const progress = Math.min(elapsed / spinDuration, 1);
+      currentAngle = startAngle + (spinAngle * progress * (1 - progress)); // Замедление
 
-// Функция отображения модального окна
-function showModal(message) {
-  modalMessage.textContent = message;
-  modal.style.display = "flex";
-}
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawWheel();
 
-// Обработчик закрытия модального окна
-closeButton.addEventListener("click", () => {
-  modal.style.display = "none";
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        isSpinning = false;
+        const winningIndex = Math.floor((segments.length * (1 - (currentAngle % (2 * Math.PI)) / (2 * Math.PI))));
+        alert("Поздравляем! Вы выиграли: " + segments[winningIndex]);
+      }
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  // Отрисовываем колесо при загрузке страницы
+  drawWheel();
+
+  // Обработчик кнопки "Крутить"
+  spinButton.addEventListener("click", spinWheel);
 });
-
-// Обработчик нажатия кнопки "Крутить"
-spinButton.addEventListener("click", startSpin);
-
-// Инициализация колеса
-drawWheel();
