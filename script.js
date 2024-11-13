@@ -19,19 +19,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
-  const radius = 200;
+  const radius = 180; // Радиус колеса, уменьшен для размещения в канвасе
   let currentAngle = 0;
   let isSpinning = false;
 
   // Функция рисования колеса
   function drawWheel() {
-    const segmentAngle = (2 * Math.PI) / segments.length;
+    const segmentAngle = (2 * Math.PI) / segments.length; // Угол каждого сегмента
 
+    // Рисуем каждый сектор
     for (let i = 0; i < segments.length; i++) {
       // Устанавливаем цвет сегмента
       ctx.fillStyle = segmentColors[i];
-      
-      // Начинаем рисовать сегмент
+
+      // Начинаем рисовать сектор
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
       ctx.arc(
@@ -48,7 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
         centerY + Math.sin(currentAngle + segmentAngle / 2) * (radius - 50)
       );
       ctx.rotate(currentAngle + segmentAngle / 2);
-      ctx.fillStyle = "#FFFFFF";
+      ctx.fillStyle = "#FFFFFF"; // Белый цвет для текста
       ctx.font = "bold 16px Arial";
       ctx.fillText(
         segments[i], 
@@ -106,3 +107,4 @@ document.addEventListener("DOMContentLoaded", () => {
   // Обработчик кнопки "Крутить"
   spinButton.addEventListener("click", spinWheel);
 });
+
