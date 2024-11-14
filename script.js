@@ -3,8 +3,29 @@ document.addEventListener("DOMContentLoaded", () => {
   const ctx = canvas.getContext("2d");
   const spinButton = document.getElementById("spinButton");
 
-  // Список сегментов колеса
-  const segments = [
+  let promoCodes = []; // Массив для хранения промокодов
+
+  // Загружаем промокоды с сервера
+  async function getPromoCodes() {
+    try {
+      const response = await fetch('http://localhost:3000/promocodes'); // Замените на ваш URL
+      promoCodes = await response.json();
+
+      // Если промокоды успешно загружены, заменяем стандартные призы на промокоды
+      if (promoCodes.length >= 10) {
+        segments = promoCodes.slice(0, 10); // Берем первые 10 промокодов
+      } else {
+        alert("Недостаточно промокодов для заполнения колеса!");
+        segments = Array(10).fill("Нет промокода");
+      }
+    } catch (error) {
+      console.error('Ошибка при получении промокодов:', error);
+      alert("Ошибка при загрузке промокодов. Используем стандартные призы.");
+    }
+  }
+
+  // Список сегментов колеса (по умолчанию)
+  let segments = [
     "Приз 1", "Приз 2", "Приз 3", "Приз 4", 
     "Приз 5", "Приз 6", "Приз 7", "Приз 8", 
     "Приз 9", "Приз 10"
@@ -19,7 +40,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
-  const radius = 180; // Радиус колеса, уменьшен для размещения в канвасе
+  const radius = 180; // Радиус колеса
   let currentAngle = 0;
   let isSpinning = false;
 
@@ -27,18 +48,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function drawWheel() {
     const segmentAngle = (2 * Math.PI) / segments.length; // Угол каждого сегмента
 
-    // Рисуем каждый сектор
     for (let i = 0; i < segments.length; i++) {
-      // Устанавливаем цвет сегмента
       ctx.fillStyle = segmentColors[i];
 
-      // Начинаем рисовать сектор
+      // Рисуем сегмент
       ctx.beginPath();
       ctx.moveTo(centerX, centerY);
-      ctx.arc(
-        centerX, centerY, radius, 
-        currentAngle, currentAngle + segmentAngle
-      );
+      ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + segmentAngle);
       ctx.lineTo(centerX, centerY);
       ctx.fill();
 
@@ -49,16 +65,11 @@ document.addEventListener("DOMContentLoaded", () => {
         centerY + Math.sin(currentAngle + segmentAngle / 2) * (radius - 50)
       );
       ctx.rotate(currentAngle + segmentAngle / 2);
-      ctx.fillStyle = "#FFFFFF"; // Белый цвет для текста
+      ctx.fillStyle = "#FFFFFF";
       ctx.font = "bold 16px Arial";
-      ctx.fillText(
-        segments[i], 
-        -ctx.measureText(segments[i]).width / 2, 
-        5
-      );
+      ctx.fillText(segments[i], -ctx.measureText(segments[i]).width / 2, 5);
       ctx.restore();
 
-      // Увеличиваем угол для следующего сегмента
       currentAngle += segmentAngle;
     }
 
@@ -94,17 +105,25 @@ document.addEventListener("DOMContentLoaded", () => {
       } else {
         isSpinning = false;
         const winningIndex = Math.floor((segments.length * (1 - (currentAngle % (2 * Math.PI)) / (2 * Math.PI))));
-        alert("Поздравляем! Вы выиграли: " + segments[winningIndex]);
+        const winningPromoCode = segments[winningIndex];
+
+        alert("Поздравляем! Ваш промокод: " + winningPromoCode);
       }
     }
 
     requestAnimationFrame(animate);
   }
 
-  // Отрисовываем колесо при загрузке страницы
-  drawWheel();
+  // Инициализация колеса при загрузке страницы
+  async function initializeWheel() {
+    await getPromoCodes(); // Загружаем промокоды
+    drawWheel(); // Рисуем колесо с промокодами
+  }
 
   // Обработчик кнопки "Крутить"
   spinButton.addEventListener("click", spinWheel);
+
+  // Запускаем инициализацию
+  initializeWheel();
 });
 
